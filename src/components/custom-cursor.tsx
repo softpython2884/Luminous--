@@ -7,17 +7,18 @@ interface CustomCursorProps {
   cursorPosition: { x: number | null; y: number | null };
 }
 
-const NUM_CURSOR_PARTICLES = 10; // Increased for a denser orb
-const CURSOR_RADIUS = 12; // Slightly reduced for a more compact orb
+const NUM_CURSOR_PARTICLES_OUTER = 8; // Particles for the luminous zone
+const CURSOR_RADIUS_OUTER = 10;      // Radius for the luminous zone particles
+const NUCLEUS_SIZE = 3;             // Size of the central nucleus particle in px
 
 const CustomCursor: React.FC<CustomCursorProps> = ({ cursorPosition }) => {
-  const particles = useMemo(() => {
-    return Array.from({ length: NUM_CURSOR_PARTICLES }).map((_, i) => {
-      const angle = (i / NUM_CURSOR_PARTICLES) * 2 * Math.PI;
-      const x = CURSOR_RADIUS * Math.cos(angle);
-      const y = CURSOR_RADIUS * Math.sin(angle);
+  const outerParticles = useMemo(() => {
+    return Array.from({ length: NUM_CURSOR_PARTICLES_OUTER }).map((_, i) => {
+      const angle = (i / NUM_CURSOR_PARTICLES_OUTER) * 2 * Math.PI;
+      const x = CURSOR_RADIUS_OUTER * Math.cos(angle);
+      const y = CURSOR_RADIUS_OUTER * Math.sin(angle);
       const animationDelay = `${Math.random() * 1}s`;
-      return { id: i, x, y, animationDelay };
+      return { id: `outer-${i}`, x, y, animationDelay };
     });
   }, []);
 
@@ -33,7 +34,17 @@ const CustomCursor: React.FC<CustomCursorProps> = ({ cursorPosition }) => {
       }}
       aria-hidden="true"
     >
-      {particles.map(p => (
+      {/* Nucleus Particle */}
+      <div
+        className="cursor-nucleus-particle"
+        style={{
+          width: `${NUCLEUS_SIZE}px`,
+          height: `${NUCLEUS_SIZE}px`,
+          transform: `translate(-50%, -50%)`, // Positioned at the center
+        }}
+      />
+      {/* Luminous Zone Particles */}
+      {outerParticles.map(p => (
         <div
           key={p.id}
           className="cursor-particle-element"
