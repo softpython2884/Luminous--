@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getShapePoints, Point, ShapeType } from '@/lib/shapes';
 
 interface ClickAnimationEffectProps {
@@ -18,17 +18,20 @@ interface ParticleState extends Point {
   color: string; // 'primary' or 'accent'
   opacity: number;
   scale: number;
-  rotation: number; // Individual particle rotation, can be 0
-  // For animation
+  rotation: number;
   destX: number; 
   destY: number;
-  delay: number; // Animation delay
+  delay: number; 
 }
 
-const TOTAL_ANIMATION_DURATION = 1500; // ms
-const FADE_IN_DURATION = 300; // ms
-const HOLD_DURATION = 400; // ms
-// FADE_OUT_DURATION is TOTAL_ANIMATION_DURATION - FADE_IN_DURATION - HOLD_DURATION
+const INITIAL_RENDER_DELAY_MS = 50; // ms before triggering first animation
+const PARTICLE_FADE_IN_STAGE_MS = 500; // Target duration for particle fade-in
+const PARTICLE_HOLD_STAGE_MS = 800;   // Target duration for particles to hold shape
+const PARTICLE_TRANSITION_MS = 1000; // How long individual particle transitions take (fade-in, then disperse/fade-out)
+const STAGGER_MAX_DELAY_MS = 200; // Max random delay for staggering particle animations
+
+// Calculate total effect lifespan for onComplete callback
+const EFFECT_LIFESPAN = INITIAL_RENDER_DELAY_MS + PARTICLE_FADE_IN_STAGE_MS + PARTICLE_HOLD_STAGE_MS + PARTICLE_TRANSITION_MS + STAGGER_MAX_DELAY_MS + 200; // Added buffer
 
 const ClickAnimationEffect: React.FC<ClickAnimationEffectProps> = ({ id, x, y, shapeType, onComplete }) => {
   const [particles, setParticles] = useState<ParticleState[]>([]);
@@ -38,19 +41,19 @@ const ClickAnimationEffect: React.FC<ClickAnimationEffectProps> = ({ id, x, y, s
     const shapePoints = getShapePoints(shapeType);
     const newParticles: ParticleState[] = shapePoints.map((p, i) => {
       const angle = Math.random() * 2 * Math.PI;
-      const dispersionRadius = 80 + Math.random() * 50; // How far particles disperse
+      const dispersionRadius = 120 + Math.random() * 80; // Increased dispersion
       return {
         id: `particle-${id}-${i}`,
-        x: p.x, // Initial position relative to shape center
+        x: p.x, 
         y: p.y,
-        size: Math.random() * 4 + 4, // 4px to 8px
+        size: Math.random() * 4 + 4,
         color: Math.random() > 0.3 ? 'primary' : 'accent',
         opacity: 0,
         scale: 0,
-        rotation: Math.random() * 360, // Random initial rotation for particles
-        destX: p.x + dispersionRadius * Math.cos(angle), // Final dispersed position
+        rotation: Math.random() * 360,
+        destX: p.x + dispersionRadius * Math.cos(angle), 
         destY: p.y + dispersionRadius * Math.sin(angle),
-        delay: Math.random() * 200, // Staggered appearance
+        delay: Math.random() * STAGGER_MAX_DELAY_MS, 
       };
     });
     setParticles(newParticles);
@@ -58,24 +61,24 @@ const ClickAnimationEffect: React.FC<ClickAnimationEffectProps> = ({ id, x, y, s
     // Animate in
     const fadeInTimer = setTimeout(() => {
       setParticles(prev => prev.map(p => ({ ...p, opacity: 1, scale: 1 })));
-      setOverallRotation(Math.random() * 60 - 30); // Rotate the whole shape slightly
-    }, 50); // Small delay to allow initial state to render
+      setOverallRotation(Math.random() * 60 - 30); 
+    }, INITIAL_RENDER_DELAY_MS); 
 
-    // Animate out
+    // Animate out (disperse)
     const fadeOutTimer = setTimeout(() => {
       setParticles(prev => prev.map(p => ({
         ...p,
-        x: p.destX, // Move to dispersed position
+        x: p.destX, 
         y: p.destY,
         opacity: 0,
-        scale: 0.3 + Math.random() * 0.4, // Shrink to smaller size
+        scale: 0.3 + Math.random() * 0.4, 
       })));
-      setOverallRotation(prev => prev + Math.random() * 60 - 30);
-    }, FADE_IN_DURATION + HOLD_DURATION);
+      setOverallRotation(prev => prev + Math.random() * 90 - 45); // More rotation on disperse
+    }, INITIAL_RENDER_DELAY_MS + PARTICLE_FADE_IN_STAGE_MS + PARTICLE_HOLD_STAGE_MS);
     
     const completeTimer = setTimeout(() => {
       onComplete(id);
-    }, TOTAL_ANIMATION_DURATION);
+    }, EFFECT_LIFESPAN);
 
     return () => {
       clearTimeout(fadeInTimer);
@@ -91,7 +94,7 @@ const ClickAnimationEffect: React.FC<ClickAnimationEffectProps> = ({ id, x, y, s
         top: y,
         left: x,
         transform: `translate(-50%, -50%) rotate(${overallRotation}deg)`,
-        transition: `transform ${TOTAL_ANIMATION_DURATION}ms ease-out`,
+        transition: `transform ${PARTICLE_TRANSITION_MS * 1.5}ms ease-out`, // Overall shape rotation transition
       }}
       aria-hidden="true"
     >
@@ -105,9 +108,9 @@ const ClickAnimationEffect: React.FC<ClickAnimationEffectProps> = ({ id, x, y, s
             backgroundColor: `hsl(var(--${p.color}))`,
             opacity: p.opacity,
             transform: `translate(${p.x}px, ${p.y}px) scale(${p.scale}) rotate(${p.rotation}deg)`,
-            transitionDuration: `${FADE_IN_DURATION + HOLD_DURATION + 500}ms`, // Covers both phases
+            transitionDuration: `${PARTICLE_TRANSITION_MS}ms`,
             transitionDelay: `${p.delay}ms`,
-            transitionProperty: 'transform, opacity',
+            transitionProperty: 'transform, opacity, box-shadow', // Ensure box-shadow is transitioned
           }}
         />
       ))}

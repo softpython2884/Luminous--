@@ -1,14 +1,14 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 interface CustomCursorProps {
-  cursorPosition: { x: number; y: number };
+  cursorPosition: { x: number | null; y: number | null };
 }
 
-const NUM_CURSOR_PARTICLES = 7;
-const CURSOR_RADIUS = 15; // Radius of the circle formed by cursor particles
+const NUM_CURSOR_PARTICLES = 10; // Increased for a denser orb
+const CURSOR_RADIUS = 12; // Slightly reduced for a more compact orb
 
 const CustomCursor: React.FC<CustomCursorProps> = ({ cursorPosition }) => {
   const particles = useMemo(() => {
@@ -16,7 +16,6 @@ const CustomCursor: React.FC<CustomCursorProps> = ({ cursorPosition }) => {
       const angle = (i / NUM_CURSOR_PARTICLES) * 2 * Math.PI;
       const x = CURSOR_RADIUS * Math.cos(angle);
       const y = CURSOR_RADIUS * Math.sin(angle);
-      // Add random animation delay for each particle to make shimmer less uniform
       const animationDelay = `${Math.random() * 1}s`;
       return { id: i, x, y, animationDelay };
     });
