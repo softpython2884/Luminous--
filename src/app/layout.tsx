@@ -14,13 +14,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark"> {/* Apply dark theme by default */}
-      <head>
+      <body className="font-body antialiased">
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Removed Inter, replaced with Space Grotesk */}
         <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet" />
-      </head>
-      <body className="font-body antialiased">
         {children}
         <Toaster /> {/* Toaster for any notifications, though not explicitly used by core features */}
       </body>
